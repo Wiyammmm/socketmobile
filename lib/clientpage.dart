@@ -1,6 +1,10 @@
 import 'dart:typed_data';
-
+import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:nfc_manager/nfc_manager.dart';
+import 'package:socketserver/services/nfc.dart';
+// import 'package:get_ip_address/get_ip_address.dart';
 import 'class/client.dart';
 
 class ClientPage extends StatefulWidget {
@@ -9,28 +13,78 @@ class ClientPage extends StatefulWidget {
 }
 
 class _ClientPageState extends State<ClientPage> {
+  nfcBackend nfcbackend = nfcBackend();
   Client? client;
   List<String> serverLogs = [];
   TextEditingController controller = TextEditingController();
-
+  String ipAddress = "";
+  String _tagId = "";
   initState() {
     super.initState();
-
+    _initNFC();
+    _getIPAddress();
     client = Client(
-      hostname: "192.168.1.39",
+      hostname: "10.99.72.192",
       port: 4040,
       onData: this.onData,
       onError: this.onError,
     );
   }
 
+  Future<String> _getWifiIP() async {
+    for (var interface in await NetworkInterface.list()) {
+      for (var addr in interface.addresses) {
+        // Check if it's an IPv4 address and not a loopback address
+        if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
+          return addr.address;
+        }
+      }
+    }
+    return 'Unknown';
+  }
+
+  Future<void> _initNFC() async {
+    // Start continuous scanning
+    print('init nfc');
+
+    // Start Session
+    NfcManager.instance.startSession(
+      onDiscovered: (NfcTag tag) async {
+        print('${tag.data}');
+        // Do something with an NfcTag instance.
+        String tagId = nfcbackend.extractTagId(tag);
+        setState(() {
+          print('main to');
+          _tagId = "tag.data: $tagId";
+
+          client!.write({"cardId": "$_tagId", "amount": 100});
+          controller.text = "";
+          print('tagid: $_tagId');
+        });
+      },
+    );
+  }
+
+  Future<void> _getIPAddress() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.wifi) {
+        var wifiIP = await _getWifiIP();
+
+        setState(() {
+          ipAddress = '$wifiIP';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        ipAddress = 'Error: $e';
+      });
+    }
+    print('ip address: $ipAddress');
+  }
+
   onData(Uint8List data) {
-    DateTime time = DateTime.now();
-    serverLogs.add(time.hour.toString() +
-        "h" +
-        time.minute.toString() +
-        " : " +
-        String.fromCharCodes(data));
+    serverLogs.add(String.fromCharCodes(data));
     setState(() {});
   }
 
@@ -195,7 +249,9 @@ class _ClientPageState extends State<ClientPage> {
                 ),
                 MaterialButton(
                   onPressed: () {
-                    client!.write(controller.text);
+                    client!.write({"cardId": "$_tagId", "amount": 100});
+
+                    controller.text = "";
                     controller.text = "";
                   },
                   minWidth: 30,

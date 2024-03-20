@@ -34,9 +34,10 @@ class Client {
     }
   }
 
-  write(String message) {
+  write(Map<String, dynamic> message) {
     //Connect standard in to the socket
-    socket.write(message + '\n');
+    this.onData(Uint8List.fromList('$message'.codeUnits));
+    socket.write(message);
   }
 
   disconnect() {

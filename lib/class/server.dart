@@ -36,10 +36,10 @@ class Server {
     this.running = false;
   }
 
-  broadCast(String message) {
-    this.onData(Uint8List.fromList('Broadcasting : $message'.codeUnits));
+  broadCast(Map<String, dynamic> message) {
+    this.onData(Uint8List.fromList('$message'.codeUnits));
     for (Socket socket in sockets) {
-      socket.write(message + '\n');
+      socket.write(message);
     }
   }
 

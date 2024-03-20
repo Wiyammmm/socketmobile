@@ -38,6 +38,7 @@ class Server {
 
   broadCast(Map<String, dynamic> message) {
     this.onData(Uint8List.fromList('$message'.codeUnits));
+
     for (Socket socket in sockets) {
       socket.write(message);
     }

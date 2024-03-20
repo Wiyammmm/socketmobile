@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:connectivity/connectivity.dart';
@@ -22,13 +23,18 @@ class _ClientPageState extends State<ClientPage> {
   initState() {
     super.initState();
     _initNFC();
+    _connectToServer();
     _getIPAddress();
+  }
+
+  Future<void> _connectToServer() async {
     client = Client(
       hostname: "10.99.72.192",
       port: 4040,
       onData: this.onData,
       onError: this.onError,
     );
+    await client?.connect();
   }
 
   Future<String> _getWifiIP() async {
@@ -85,6 +91,36 @@ class _ClientPageState extends State<ClientPage> {
 
   onData(Uint8List data) {
     serverLogs.add(String.fromCharCodes(data));
+    String jsonString = String.fromCharCodes(data);
+
+    // Trim any leading/trailing characters if needed
+    jsonString = jsonString.trim();
+    jsonString = jsonString.substring(1, jsonString.length - 1);
+    // Split the string by commas
+    List<String> parts = jsonString.split(',');
+    print('parts: $parts');
+    // Create an empty map
+    Map<String, dynamic> jsonMap = {};
+
+    // Loop through parts and split each part by colon to create key-value pairs
+
+    if (parts.isNotEmpty) {
+      parts.forEach((part) {
+        List<String> keyValue = part.split(':');
+        // Remove leading/trailing spaces and quotes
+        String key = keyValue[0].trim().replaceAll('"', '');
+        String value = keyValue[1].trim().replaceAll('"', '');
+        jsonMap[key] = value;
+      });
+    }
+
+    // Map<String, dynamic> jsonMap = json.decode("${String.fromCharCodes(data)}");
+    print('jsonMap: $jsonMap');
+    if (jsonMap['message'].toString() == "logout") {
+      print('logout na din');
+      confirmReturn();
+    }
+
     setState(() {});
   }
 

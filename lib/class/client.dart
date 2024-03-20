@@ -28,6 +28,7 @@ class Client {
         onDone: disconnect,
         cancelOnError: false,
       );
+
       connected = true;
     } on Exception catch (exception) {
       onData(Uint8List.fromList("Error : $exception".codeUnits));
@@ -36,7 +37,9 @@ class Client {
 
   write(Map<String, dynamic> message) {
     //Connect standard in to the socket
+
     this.onData(Uint8List.fromList('$message'.codeUnits));
+
     socket.write(message);
   }
 

@@ -73,21 +73,22 @@ class _ServerPageState extends State<ServerPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("ATTENTION"),
-          content: Text("Exiting this page will turn off the socket server"),
+          title: Text("LOGOUT"),
+          content: Text("Are you sure you want to logout?"),
           actions: <Widget>[
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
+                server!.broadCast(
+                    {"cardId": "abcd123", "amount": 100, "message": "logout"});
+                controller.text = "";
               },
-              child: Text("EXIT", style: TextStyle(color: Colors.red)),
+              child: Text("YES", style: TextStyle(color: Colors.red)),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("CANCEL", style: TextStyle(color: Colors.grey)),
+              child: Text("NO", style: TextStyle(color: Colors.grey)),
             )
           ],
         );
@@ -218,7 +219,11 @@ class _ServerPageState extends State<ServerPage> {
                 ),
                 MaterialButton(
                   onPressed: () {
-                    server!.broadCast({"cardId": "abcd123", "amount": 100});
+                    server!.broadCast({
+                      "cardId": "abcd123",
+                      "amount": 100,
+                      "message": "logout"
+                    });
                     controller.text = "";
                   },
                   minWidth: 30,
